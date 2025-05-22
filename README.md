@@ -111,7 +111,9 @@ Flask-Migrate support for database migrations.
 
 
 -- flask db init
+
 -- flask db migrate -m "Initial migration"
+
 -- flask db upgrade
 
 
@@ -123,6 +125,7 @@ Flask-Migrate support for database migrations.
 7.*Run the Flask application*:
 
 -- python app.py
+
 
 *-- Open browser and visit http://127.0.0.1:5000*
 
