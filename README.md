@@ -84,47 +84,47 @@ Flask-Migrate support for database migrations.
 
 1.*Clone the repository*
 
---git clone https://github.com/yourusername/health-blog-dashboard.git
---cd health-blog-dashboard
+-- git clone https://github.com/yourusername/health-blog-dashboard.git
+-- cd health-blog-dashboard
 
 
 2.*Create & activate a virtual environment*:
 
---python -m venv venv
---source venv/bin/activate   # Linux/macOS
---venv\Scripts\activate      # Windows
+-- python -m venv venv
+-- source venv/bin/activate   # Linux/macOS
+-- venv\Scripts\activate      # Windows
 
 
 3.*Install dependencies*:
 
---pip install flask
+-- pip install flask
 
 
 4.*Configure MySQL database*:
 
---Create a MySQL database, e.g., health_db.
+-- Create a MySQL database, e.g., health_db.
 
---Update app.config['SQLALCHEMY_DATABASE_URI'] in app.py with your MySQL username, password, host, and database name.
+-- Update app.config['SQLALCHEMY_DATABASE_URI'] in app.py with your MySQL username, password, host, and database name.
 
 
 5.*Run database migrations*:
 
 
---flask db init
---flask db migrate -m "Initial migration"
---flask db upgrade
+-- flask db init
+-- flask db migrate -m "Initial migration"
+-- flask db upgrade
 
 
 6.*Create upload folder*
 
---mkdir -p static/uploads
+-- mkdir -p static/uploads
 
 
 7.*Run the Flask application*:
 
---python app.py
+-- python app.py
 
-*--Open browser and visit http://127.0.0.1:5000*
+*-- Open browser and visit http://127.0.0.1:5000*
 
 
 
