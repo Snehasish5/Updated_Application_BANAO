@@ -5,14 +5,19 @@ A Flask-based multi-role web application for doctors and patients to manage heal
 
 
 
-**Features**
-User Roles: Supports Doctors and Patients with role-based access.
-
-Authentication: Secure login/signup with password hashing.
+**Features**:
 
 
+1.*User Roles*: Supports Doctors and Patients with role-based access.
 
-**Doctor Dashboard**:
+
+
+2.*Authentication*: Secure login/signup with password hashing.
+
+
+
+3.*Doctor Dashboard*:
+
 
 Create, edit, and publish blog posts.
 
@@ -22,7 +27,8 @@ Manage blog visibility (draft/published).
 
 
 
-**Patient Dashboard**:
+4.*Patient Dashboard*:
+
 
 View profile details.
 
@@ -32,7 +38,8 @@ Read blog post details.
 
 
 
-**Blog Management**:
+5.*Blog Management*:
+
 
 Categorized blogs (Mental Health, Heart Disease, Covid19, Immunization).
 
@@ -41,7 +48,7 @@ Blog summaries truncated for listing.
 Blog detail pages with full content and images.
 
 
-**File Uploads**:
+6.*File Uploads*:
 
 Profile pictures and blog images stored in static/uploads.
 
@@ -55,50 +62,52 @@ Flask-Migrate support for database migrations.
 
 **Tech Stack**:
 
-*Backend*: Python 3, Flask, Flask-Login, Flask-Migrate, SQLAlchemy
+
+1.*Backend*: Python 3, Flask, Flask-Login, Flask-Migrate, SQLAlchemy
 
 
-*Database*: MySQL (using mysql+pymysql)
+2.*Database*: MySQL (using mysql+pymysql)
 
 
-*Frontend*: HTML, CSS, Jinja2 templates
+3.*Frontend*: HTML, CSS, Jinja2 templates
 
 
-*File Handling*: Werkzeug for secure file uploads
+4.*File Handling*: Werkzeug for secure file uploads
 
 
-*Password Security*: Werkzeug security utilities
+5.*Password Security*: Werkzeug security utilities
 
 
 
 **Setup & Installation**:
 
-*Clone the repository*
+
+1.*Clone the repository*
 
 git clone https://github.com/yourusername/health-blog-dashboard.git
 cd health-blog-dashboard
 
 
-*Create & activate a virtual environment*:
+2.*Create & activate a virtual environment*:
 
 python -m venv venv
 source venv/bin/activate   # Linux/macOS
 venv\Scripts\activate      # Windows
 
 
-*Install dependencies*:
+3.*Install dependencies*:
 
 pip install -r requirements.txt
 
 
-*Configure MySQL database*:
+4.*Configure MySQL database*:
 
 Create a MySQL database, e.g., health_db.
 
 Update app.config['SQLALCHEMY_DATABASE_URI'] in app.py with your MySQL username, password, host, and database name.
 
 
-*Run database migrations*:
+5.*Run database migrations*:
 
 
 flask db init
@@ -106,12 +115,12 @@ flask db migrate -m "Initial migration"
 flask db upgrade
 
 
-*Create upload folder*
+6.*Create upload folder*
 
 mkdir -p static/uploads
 
 
-*Run the Flask application*:
+7.*Run the Flask application*:
 
 python app.py
 
