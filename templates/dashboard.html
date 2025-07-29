@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ user['role'] }} Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .dashboard-nav {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .nav-links a {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .nav-links a:hover {
+            background-color: #0056b3;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>{{ user['role'] }} Dashboard</h2>
+        
+        <div class="dashboard-nav">
+            <div class="nav-links">
+                {% if user['role'] == 'Doctor' %}
+                    <a href="{{ url_for('blog_create') }}">Create New Blog</a>
+                    <a href="{{ url_for('blog_list_doctor') }}">My Blogs</a>
+                {% elif user['role'] == 'Patient' %}
+                    <a href="{{ url_for('blog_list_patient') }}">View Blogs</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+        
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);">
+            <img src="{{ url_for('static', filename='uploads/' + user['profile_pic']) }}" alt="Profile Picture">
+            <p><strong>Name:</strong> {{ user['first_name'] }} {{ user['last_name'] }}</p>
+            <p><strong>Username:</strong> {{ user['username'] }}</p>
+            <p><strong>Email:</strong> {{ user['email'] }}</p>
+            <p><strong>Address:</strong> {{ user['address']['line1'] }}, {{ user['address']['city'] }},
+                {{ user['address']['state'] }} - {{ user['address']['pincode'] }}</p>
+        </div>
+    </div>
+</body>
+</html>

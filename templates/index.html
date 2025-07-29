@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Healthcare Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .welcome-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .welcome-links {
+            margin-top: 30px;
+        }
+        .welcome-links a {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin: 0 10px;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        .welcome-links a:hover {
+            background-color: #0056b3;
+            text-decoration: none;
+        }
+        .signup-link {
+            background-color: #28a745 !important;
+        }
+        .signup-link:hover {
+            background-color: #218838 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-container">
+            <h2>Welcome to the Healthcare Portal</h2>
+            <p>Your trusted platform for healthcare information and blog posts from medical professionals.</p>
+            
+            <div class="welcome-links">
+                <a href="{{ url_for('signup') }}" class="signup-link">Create Account</a>
+                <a href="{{ url_for('login') }}">Login</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

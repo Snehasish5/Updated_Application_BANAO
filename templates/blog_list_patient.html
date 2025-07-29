@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blog Posts</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .blog-item {
+            background-color: white;
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .blog-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .category-section {
+            margin-bottom: 40px;
+        }
+        .category-title {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+        .blog-meta {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .read-more {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .read-more:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
+        
+        <h2>Blog Posts</h2>
+        
+        {% for category, blogs in categorized_blogs.items() %}
+            <h3>{{ category }}</h3>
+            {% if blogs %}
+                {% for blog in blogs %}
+                    <div class="blog-card">
+                        <h4>{{ blog.title }}</h4>
+                        <img src="{{ url_for('static', filename='uploads/' + blog.image) }}" alt="Blog Image" width="200">
+                        <p>
+                            {{ blog.summary.split()[:15] | join(' ') }}
+                            {% if blog.summary.split() | length > 15 %}...{% endif %}
+                        </p>
+                        <a href="{{ url_for('blog_detail', blog_id=blog.id) }}">Read More</a>
+                    </div>
+                    <hr>
+                {% endfor %}
+            {% else %}
+                <p>No blogs available in this category.</p>
+            {% endif %}
+        {% endfor %}
+
+        {% if not categories or not any(categories.values()) %}
+            <p style="text-align: center; color: #666; margin: 40px 0;">No blog posts available at the moment.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
