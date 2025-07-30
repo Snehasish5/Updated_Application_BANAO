@@ -1,20 +1,21 @@
 import os
 from dotenv import load_dotenv
 
-# Use environment variables or default values
-DB_USERNAME = os.getenv("DB_USERNAME", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "user")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", 3306)
-DB_NAME = os.getenv("DB_NAME", "your_database")
+# Load environment variables from a .env file if it exists
+load_dotenv()
 
-# Ensure none of the values are missing
-if not all([DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME]):
-    raise ValueError("One or more database configuration values are missing.")
+# MongoDB Configuration
+MONGO_USERNAME = os.getenv("MONGO_USERNAME", "root")
+MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "password")
+MONGO_HOST = os.getenv("MONGO_HOST", "localhost")
+MONGO_PORT = os.getenv("MONGO_PORT", "27017")
+MONGO_DBNAME = os.getenv("MONGO_DBNAME", "health_app")
 
-SQLALCHEMY_DATABASE_URI = (
-    f"mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
-SQLALCHEMY_TRACK_MODIFICATIONS = False
+# For local MongoDB
+MONGO_URI = f"mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}/{MONGO_DBNAME}"
+
+# Optional: For MongoDB Atlas (cloud-hosted)
+# MONGO_URI = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@cluster.mongodb.net/{MONGO_DBNAME}?retryWrites=true&w=majority"
+
+# Flask secret key
 SECRET_KEY = os.getenv("SECRET_KEY", "abc123")
-

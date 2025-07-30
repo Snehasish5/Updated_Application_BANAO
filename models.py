@@ -1,27 +1,28 @@
-from flask_sqlalchemy import SQLAlchemy
+# models.py (MongoDB version)
+
 from flask_login import UserMixin
 
-db = SQLAlchemy()
+# User model as a Python class
+class User(UserMixin):
+    def __init__(self, data):
+        self.id = str(data.get('_id'))  # MongoDB uses ObjectId
+        self.username = data.get('username')
+        self.password = data.get('password')
+        self.role = data.get('role')
+        self.email = data.get('email')
+        self.first_name = data.get('first_name')
+        self.last_name = data.get('last_name')
+        self.profile_pic = data.get('profile_pic')
+        self.address_line = data.get('address_line')
+        self.city = data.get('city')
+        self.state = data.get('state')
+        self.pincode = data.get('pincode')
 
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
-    role = db.Column(db.String(20), nullable=False)
-    email = db.Column(db.String(120))
-    first_name = db.Column(db.String(100))
-    last_name = db.Column(db.String(100))
-    profile_pic = db.Column(db.String(100))
-    address_line = db.Column(db.String(200))
-    city = db.Column(db.String(100))
-    state = db.Column(db.String(100))
-    pincode = db.Column(db.String(20))
+    def get_id(self):
+        return self.id
 
-class Blog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(150), nullable=False)
-    image = db.Column(db.String(100))
-    category = db.Column(db.String(100))
-    summary = db.Column(db.Text)
-    content = db.Column(db.Text)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+# Blog model is handled as a dictionary document
+# You can manipulate blogs directly in views like:
+# mongo.db.blogs.insert_one(blog_dict)
+# or mongo.db.blogs.find({'author_id': user_id})
