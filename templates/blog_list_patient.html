@@ -30,9 +30,15 @@
             font-weight: bold;
         }
         .back-link {
-            display: inline-block;
+            float: left;
             margin-bottom: 20px;
-            color: #007bff;
+            color: #fff;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .back-link:hover {
+            background-color: #0056b3;
         }
         .blog-meta {
             color: #666;
@@ -53,7 +59,7 @@
     <div class="container">
         <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
         
-        <h2>Blog Posts</h2>
+        <h2 align="center">Blog Posts</h2>
         
         {% for category, blogs in categorized_blogs.items() %}
             <h3>{{ category }}</h3>
