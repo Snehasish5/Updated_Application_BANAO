@@ -1,68 +1,101 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
-from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
+import json
+from datetime import datetime
 
-# Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:user@localhost/your_database'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Initialize extensions
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-
-# Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Please log in to access this page.'
 
-# Ensure upload directory exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+USERS_FILE = 'users.json'
+BLOGS_FILE = 'blogs.json'
+CATEGORIES = ['Mental Health', 'Heart Disease', 'Covid19', 'Immunization']
 
-# Models
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), nullable=False)
-    email = db.Column(db.String(120))
-    first_name = db.Column(db.String(100))
-    last_name = db.Column(db.String(100))
-    profile_pic = db.Column(db.String(100))
-    address_line = db.Column(db.String(200))
-    city = db.Column(db.String(100))
-    state = db.Column(db.String(100))
-    pincode = db.Column(db.String(20))
-    
-    # Relationship with blogs
-    blogs = db.relationship('Blog', backref='author', lazy=True)
+# Helper functions to load/save JSON files
+def load_json(filename):
+    if not os.path.exists(filename):
+        return []
+    with open(filename, 'r', encoding='utf-8') as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return []
 
-class Blog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(150), nullable=False)
-    image = db.Column(db.String(100))
-    category = db.Column(db.String(100))
-    summary = db.Column(db.Text)
-    content = db.Column(db.Text)
-    is_draft = db.Column(db.Boolean, default=False)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+def save_json(filename, data):
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+
+# User class compatible with Flask-Login, but data from JSON
+class User(UserMixin):
+    def __init__(self, data):
+        self.id = str(data['id'])
+        self.username = data['username']
+        self.password = data['password']  # hashed
+        self.role = data['role']
+        self.email = data.get('email', '')
+        self.first_name = data.get('first_name', '')
+        self.last_name = data.get('last_name', '')
+        self.profile_pic = data.get('profile_pic', 'default.jpg')
+        self.address_line = data.get('address_line', '')
+        self.city = data.get('city', '')
+        self.state = data.get('state', '')
+        self.pincode = data.get('pincode', '')
+
+    def get_dict(self):
+        return {
+            'id': int(self.id),
+            'username': self.username,
+            'password': self.password,
+            'role': self.role,
+            'email': self.email,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'profile_pic': self.profile_pic,
+            'address_line': self.address_line,
+            'city': self.city,
+            'state': self.state,
+            'pincode': self.pincode
+        }
+
+def find_user_by_username(username):
+    users = load_json(USERS_FILE)
+    for u in users:
+        if u['username'] == username:
+            return User(u)
+    return None
+
+def find_user_by_id(user_id):
+    users = load_json(USERS_FILE)
+    for u in users:
+        if str(u['id']) == str(user_id):
+            return User(u)
+    return None
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return find_user_by_id(user_id)
 
-# Blog categories
-CATEGORIES = ['Mental Health', 'Heart Disease', 'Covid19', 'Immunization']
+def get_next_user_id():
+    users = load_json(USERS_FILE)
+    if not users:
+        return 1
+    return max(u['id'] for u in users) + 1
 
-# Routes
+def get_next_blog_id():
+    blogs = load_json(BLOGS_FILE)
+    if not blogs:
+        return 1
+    return max(b['id'] for b in blogs) + 1
+
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -73,88 +106,79 @@ def index():
 def signup():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
-        
+
     if request.method == 'POST':
-        try:
-            # Get form data
-            username = request.form.get('username', '').strip()
-            email = request.form.get('email', '').strip()
-            password = request.form.get('password', '')
-            confirm_password = request.form.get('confirm_password', '')
-            role = request.form.get('role', '')
-            first_name = request.form.get('first_name', '').strip()
-            last_name = request.form.get('last_name', '').strip()
-            address_line = request.form.get('line1', '').strip()
-            city = request.form.get('city', '').strip()
-            state = request.form.get('state', '').strip()
-            pincode = request.form.get('pincode', '').strip()
-            
-            # Validate passwords match
-            if password != confirm_password:
-                flash('Passwords do not match!')
-                return render_template('signup.html')
-            
-            # Check if username already exists
-            if User.query.filter_by(username=username).first():
-                flash('Username already exists!')
-                return render_template('signup.html')
-            
-            # Handle profile picture upload
-            profile_pic = request.files.get('profile_pic')
-            filename = 'default.jpg'
-            if profile_pic and profile_pic.filename:
-                filename = secure_filename(profile_pic.filename)
-                profile_pic.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            
-            # Create new user
-            new_user = User(
-                username=username,
-                email=email,
-                password=generate_password_hash(password),
-                role=role,
-                first_name=first_name,
-                last_name=last_name,
-                profile_pic=filename,
-                address_line=address_line,
-                city=city,
-                state=state,
-                pincode=pincode
-            )
-            
-            db.session.add(new_user)
-            db.session.commit()
-            
-            flash('Registration successful! Please login.')
-            return redirect(url_for('login'))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash(f'An error occurred: {str(e)}')
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        role = request.form.get('role', '')
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        address_line = request.form.get('line1', '').strip()
+        city = request.form.get('city', '').strip()
+        state = request.form.get('state', '').strip()
+        pincode = request.form.get('pincode', '').strip()
+
+        if password != confirm_password:
+            flash('Passwords do not match!')
             return render_template('signup.html')
-    
+
+        if find_user_by_username(username):
+            flash('Username already exists!')
+            return render_template('signup.html')
+
+        profile_pic = request.files.get('profile_pic')
+        filename = 'default.jpg'
+        if profile_pic and profile_pic.filename:
+            filename = secure_filename(profile_pic.filename)
+            profile_pic.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        users = load_json(USERS_FILE)
+        new_id = get_next_user_id()
+        new_user_data = {
+            'id': new_id,
+            'username': username,
+            'email': email,
+            'password': generate_password_hash(password),
+            'role': role,
+            'first_name': first_name,
+            'last_name': last_name,
+            'profile_pic': filename,
+            'address_line': address_line,
+            'city': city,
+            'state': state,
+            'pincode': pincode
+        }
+        users.append(new_user_data)
+        save_json(USERS_FILE, users)
+
+        flash('Registration successful! Please login.')
+        return redirect(url_for('login'))
+
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
-        
+
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-        
+
         if not username or not password:
             return render_template('login.html', error='Please enter both username and password')
-        
-        user = User.query.filter_by(username=username).first()
-        
+
+        user = find_user_by_username(username)
+
         if user and check_password_hash(user.password, password):
             login_user(user)
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('dashboard'))
         else:
             return render_template('login.html', error='Invalid username or password')
-    
+
     return render_template('login.html')
 
 @app.route('/logout')
@@ -183,7 +207,6 @@ def dashboard():
     }
     return render_template('dashboard.html', user=user_data)
 
-# Blog Routes
 @app.route('/blog_create', methods=['GET', 'POST'])
 @login_required
 def blog_create():
@@ -191,92 +214,90 @@ def blog_create():
         flash('Only doctors can create blog posts!')
         return redirect(url_for('dashboard'))
 
-    CATEGORIES = ["Mental Health", "Heart Disease", "Covid19", "Immunization"]
-    
     if request.method == 'POST':
-        try:
-            title = request.form.get('title', '').strip()
-            category = request.form.get('category', '')
-            summary = request.form.get('summary', '').strip()
-            content = request.form.get('content', '').strip()
-            is_draft = 'is_draft' in request.form
-            image = request.files.get('image')
+        title = request.form.get('title', '').strip()
+        category = request.form.get('category', '')
+        summary = request.form.get('summary', '').strip()
+        content = request.form.get('content', '').strip()
+        is_draft = 'is_draft' in request.form
+        image = request.files.get('image')
 
-            filename = 'default_blog.jpg'
-            if image and image.filename:
-                filename = secure_filename(image.filename)
-                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        filename = 'default_blog.jpg'
+        if image and image.filename:
+            filename = secure_filename(image.filename)
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-            new_blog = Blog(
-                title=title,
-                image=filename,
-                category=category,
-                summary=summary,
-                content=content,
-                is_draft=is_draft,
-                author_id=current_user.id
-            )
-            db.session.add(new_blog)
-            db.session.commit()
+        blogs = load_json(BLOGS_FILE)
+        new_blog_id = get_next_blog_id()
+        new_blog = {
+            'id': new_blog_id,
+            'title': title,
+            'image': filename,
+            'category': category,
+            'summary': summary,
+            'content': content,
+            'is_draft': is_draft,
+            'author_id': int(current_user.id),
+            'created_at': datetime.now().isoformat()
+        }
+        blogs.append(new_blog)
+        save_json(BLOGS_FILE, blogs)
 
-            flash('Blog created successfully!')
-            return redirect(url_for('blog_list_doctor'))
-            
-        except Exception as e:
-            db.session.rollback()
-            print("Error in blog_create:", str(e))
-            flash(f'An error occurred: {str(e)}')
+        flash('Blog created successfully!')
+        return redirect(url_for('blog_list_doctor'))
 
     return render_template('blog_create.html', categories=CATEGORIES, blog=None)
 
 @app.route('/doctor/blogs')
 @login_required
 def blog_list_doctor():
-    # Only doctors can view this page
-    if current_user.role != 'Doctor':
+    if current_user.role.lower() != 'doctor':
         flash('Access denied!')
-        return redirect(url_for('doctor_dashboard'))
-    
-    blogs = Blog.query.filter_by(author_id=current_user.id).order_by(Blog.created_at.desc()).all()
-    return render_template('blog_list_doctor.html', blogs=blogs)
+        return redirect(url_for('dashboard'))
+
+    blogs = load_json(BLOGS_FILE)
+    user_blogs = [b for b in blogs if b['author_id'] == int(current_user.id)]
+    user_blogs.sort(key=lambda b: b['created_at'], reverse=True)
+
+    return render_template('blog_list_doctor.html', blogs=user_blogs)
 
 @app.route('/patient/blogs')
 @login_required
 def blog_list_patient():
-    # Only patients can view this page
-    if current_user.role != 'Patient':
+    if current_user.role.lower() != 'patient':
         flash('Access denied!')
         return redirect(url_for('dashboard'))
 
+    blogs = load_json(BLOGS_FILE)
     categorized = {cat: [] for cat in CATEGORIES}
-    all_blogs = Blog.query.filter_by(is_draft=False).order_by(Blog.created_at.desc()).all()
+    for blog in blogs:
+        if not blog.get('is_draft', False) and blog.get('category') in categorized:
+            categorized[blog['category']].append(blog)
 
-    for blog in all_blogs:
-        if blog.category in categorized:
-            categorized[blog.category].append(blog)
+    # Sort blogs in each category by created_at descending
+    for cat_blogs in categorized.values():
+        cat_blogs.sort(key=lambda b: b['created_at'], reverse=True)
 
     return render_template('blog_list_patient.html', categorized_blogs=categorized, any_func=any)
-
 
 @app.route('/blog/<int:blog_id>')
 @login_required
 def blog_detail(blog_id):
-    blog = Blog.query.get_or_404(blog_id)
-    
-    # Check if user can view this blog
-    if blog.is_draft and blog.author_id != current_user.id:
+    blogs = load_json(BLOGS_FILE)
+    blog = next((b for b in blogs if b['id'] == blog_id), None)
+    if not blog:
         flash('Blog not found!')
         return redirect(url_for('dashboard'))
-    
-    return render_template('blog_detail.html', blog=blog)
+
+    # Only author can see draft blogs
+    if blog.get('is_draft', False) and blog['author_id'] != int(current_user.id):
+        flash('Blog not found!')
+        return redirect(url_for('dashboard'))
+
+    # Get author info
+    author = find_user_by_id(blog['author_id'])
+    return render_template('blog_detail.html', blog=blog, author=author)
 
 if __name__ == '__main__':
-    with app.app_context():
-        try:
-            db.create_all()
-            print("Database tables created successfully!")
-        except Exception as e:
-            print(f"Error creating database tables: {e}")
-    
-    print("Starting Flask application...")
+    print("Starting Flask application with JSON storage...")
     app.run(debug=True, host='127.0.0.1', port=5000)
